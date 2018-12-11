@@ -65,10 +65,10 @@ def divideGrafo(vertices, matrizAdjacencia):
 
         arestasDivisao = []
         for j in range(tamanho):
-            print("Cria divisao nula: " + str(j))
+            # print("Cria divisao nula: " + str(j))
             divisao.append([])
             for k in range(posicaoInicial, posicaoFinal):
-                print("Append coluna: " + str(k))
+                # print("Append coluna: " + str(k))
                 divisao[j].append(matrizAdjacencia[j][k])
         
         posicaoInicial = posicaoFinal
@@ -107,18 +107,39 @@ def achaMenorGlobal(menores):
     return (menorPeso, posI, posJ)
 
 
+def escreveMatrizArquivo(prefixoArquivoSaida, vertices, matriz):
+    saida = "\t"
+    for vertice in vertices:
+        saida += str(vertice) + "\t"
+    saida += '\n'
+    for i in range(len(vertices)):
+        saida += str(i) + "\t"
+        for j in range(len(vertices)):
+            if(agm['matriz'][i][j] == None):
+                saida += "-"
+            else:
+                saida += "{0:.2f}".format(agm['matriz'][i][j])
+            saida += "\t"
+        saida += "\n"
+    
+    with open(prefixoArquivoSaida + "-mat.txt", "w") as arquivo:
+        arquivo.write(saida)
+
+    print(saida)
+    
+
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
     rank = comm.Get_rank()
 
     if rank == 0:
-        nomeArquivo = sys.argv[1]
-        if nomeArquivo == "":
+        nomeArquivoEntrada = sys.argv[1]
+        if nomeArquivoEntrada == "":
             print("Informa o nome do arquivo")
             sys.exit()
 
-        infos = LeitorArquivo(nomeArquivo).leArquivo()
+        infos = LeitorArquivo(nomeArquivoEntrada).leArquivo()
         vertices = infos['vertices']
         
         matriz = infos['matriz']
@@ -126,16 +147,16 @@ if __name__ == "__main__":
         divisoes = divideGrafo(vertices, matriz)
         print("terminou divisões")
         
-        for i in range(size):
+        for i in range(1, size):
             print("Enviando para o processador " + str(i))
             comm.send(divisoes[i], dest=i, tag=0)
             print("Terminou envio para o processador " + str(i))
         
+        divisao = divisoes[0]
         print("Terminou envios")
-    
+    else:
+        divisao = comm.recv(source=0, tag=0)
 
-
-    divisao = comm.recv(source=0, tag=0)
     print("Recebeu: " + str(rank))
     tamanho = 1
     
@@ -147,7 +168,7 @@ if __name__ == "__main__":
 
     sai = False
     while (not sai):
-        print("Paralelo")
+        # print("Paralelo")
         verticesAGM = comm.bcast(agm['vertices'], root=0)
 
         
@@ -172,12 +193,10 @@ if __name__ == "__main__":
         sai = comm.bcast(sai, root=0)  
 
     if rank == 0:
-        print("JADOISDJOIASJDIOJASOIDJIOASJDOIJASDIOJAIOSDJ")
-        for cont,i in enumerate(agm['matriz']):
-            print(str(cont) + "\t" + str(i))
-        print(agm['vertices'])
-        
+        prefixoArquivoSaida = "saida"
+        escreveMatrizArquivo(prefixoArquivoSaida, agm['vertices'], agm['matriz'])
 
+    MPI.Finalize()
         
 
         
