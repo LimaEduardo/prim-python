@@ -1,0 +1,1 @@
+./test_instances/menores/teste.in	4.202343702316284

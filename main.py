@@ -45,7 +45,7 @@ def achaMenorMatriz(subGrafo, verticesDivisao, verticesAGM):
 
 
 def divideGrafo(vertices, matrizAdjacencia):
-    print("Divide")
+    # print("Divide")
     divisaoMatrizes = {}
 
     comm = MPI.COMM_WORLD
@@ -60,7 +60,7 @@ def divideGrafo(vertices, matrizAdjacencia):
     posicaoVerticeInicial = 0
     posicaoVerticeFinal = 0
     for i in range(size):
-        print("Processador: " + str(i))
+        # print("Processador: " + str(i))
         numeroColunas = int(len(vertices)/size)
 
         if (i < restoChunks):
@@ -84,7 +84,7 @@ def divideGrafo(vertices, matrizAdjacencia):
         divisaoMatrizes[i] = {'matriz' : divisao, 'vertices' : vertices[posicaoVerticeInicial:posicaoVerticeFinal]}
         posicaoVerticeInicial = posicaoVerticeFinal
 
-        print("Termina processador: " + str(i))
+        # print("Termina processador: " + str(i))
 
     
     return divisaoMatrizes
@@ -132,10 +132,10 @@ def escreveMatrizArquivo(prefixoArquivoSaida, vertices, matriz):
     with open(prefixoArquivoSaida + "-mat.txt", "w") as arquivo:
         arquivo.write(saida)
 
-    print(saida)
+    # print(saida)
     
 
-def exportaGraphviz(agm):
+def exportaGraphviz(prefixoArquivoSaida, agm):
     dot = Graph()
     vertices = agm['vertices']
     matriz = agm['matriz']
@@ -148,11 +148,11 @@ def exportaGraphviz(agm):
             if(matriz[i][j] != None):
                 dot.edge(str(i), str(j), "{0:.2f}".format(matriz[i][j]))
 
-    with open("saida.dot", "w") as arquivo:
+    with open(prefixoArquivoSaida + ".dot", "w") as arquivo:
         arquivo.write(dot.source)
-    print(dot.source)
+    # print(dot.source)
 
-    os.system("dot -Tpng saida.dot > saida.png")
+    os.system("dot -Tpng " + prefixoArquivoSaida + ".dot > " + prefixoArquivoSaida + ".png")
 
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
@@ -164,6 +164,10 @@ if __name__ == "__main__":
         if nomeArquivoEntrada == "":
             print("Informa o nome do arquivo")
             sys.exit()
+        # nomeArquivoSaida = sys.argv[2]
+        # if nomeArquivoSaida == "":
+        #     print("Informa o nome do arquivo")
+        #     sys.exit()
 
         infos = LeitorArquivo(nomeArquivoEntrada).leArquivo()
         vertices = infos['vertices']
@@ -171,19 +175,19 @@ if __name__ == "__main__":
         matriz = infos['matriz']
 
         divisoes = divideGrafo(vertices, matriz)
-        print("terminou divisões")
+        # print("terminou divisões")
         
         for i in range(1, size):
-            print("Enviando para o processador " + str(i))
+            # print("Enviando para o processador " + str(i))
             comm.send(divisoes[i], dest=i, tag=0)
-            print("Terminou envio para o processador " + str(i))
+            # print("Terminou envio para o processador " + str(i))
         
         divisao = divisoes[0]
-        print("Terminou envios")
+        # print("Terminou envios")
     else:
         divisao = comm.recv(source=0, tag=0)
 
-    print("Recebeu: " + str(rank))
+    # print("Recebeu: " + str(rank))
     tamanho = 1
     
     if rank == 0:
@@ -212,7 +216,7 @@ if __name__ == "__main__":
             agm['matriz'][menorGlobal[2]][menorGlobal[1]] = menorGlobal[0]
             agm['vertices'][menorGlobal[1]] = menorGlobal[1]
             agm['vertices'][menorGlobal[2]] = menorGlobal[2]
-            print("INSERINDO", len(agm['vertices']))
+            # print("INSERINDO", len(agm['vertices']))
             
             if len(agm['vertices']) >= len(vertices):
                 sai = True
@@ -221,8 +225,9 @@ if __name__ == "__main__":
 
     if rank == 0:
         prefixoArquivoSaida = "saida"
+        # prefixoArquivoSaida = nomeArquivoSaida
         escreveMatrizArquivo(prefixoArquivoSaida, agm['vertices'], agm['matriz'])
-        exportaGraphviz(agm)
+        # exportaGraphviz(prefixoArquivoSaida, agm)
 
     MPI.Finalize()
         
