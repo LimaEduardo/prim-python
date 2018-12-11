@@ -1,18 +1,25 @@
 import sys
+import os
 
 from leitorArquivo import LeitorArquivo
 from mpi4py import MPI
+from graphviz import Graph
 
 def achaMenorLista(lista, verticesDivisao, verticesAGM):
     menor = None
     posicao = None
     for i in range(len(lista)):
-        if(menor == None and verticesDivisao[i] not in verticesAGM):
-            menor = lista[i]
-            posicao = i
-        elif(lista[i] != None and menor != None and lista[i] < menor and verticesDivisao[i] not in verticesAGM):
-            menor = lista[i]
-            posicao = i
+        try:
+            verticesAGM[verticesDivisao[i]]
+        except KeyError:
+            if(menor == None):
+                menor = lista[i]
+                posicao = i
+            elif(lista[i] != None and menor != None and lista[i] < menor):
+                menor = lista[i]
+                posicao = i
+        
+        
 
     return (menor, posicao)
 
@@ -89,8 +96,8 @@ def gerarArvoreInicial(vertices):
         matriz.append([])
         for j in range(len(vertices)):
             matriz[i].append(None)
-    conjuntoVertices = set()
-    conjuntoVertices.add(vertices[0])
+    conjuntoVertices = {}
+    conjuntoVertices[0] = 0
 
     agm = {'matriz' : matriz, 'vertices' : conjuntoVertices}
 
@@ -109,12 +116,12 @@ def achaMenorGlobal(menores):
 
 def escreveMatrizArquivo(prefixoArquivoSaida, vertices, matriz):
     saida = "\t"
-    for vertice in vertices:
-        saida += str(vertice) + "\t"
-    saida += '\n'
-    for i in range(len(vertices)):
+    for i in range(len(matriz)):
         saida += str(i) + "\t"
-        for j in range(len(vertices)):
+    saida += '\n'
+    for i in range(len(matriz)):
+        saida += str(i) + "\t"
+        for j in range(len(matriz)):
             if(agm['matriz'][i][j] == None):
                 saida += "-"
             else:
@@ -127,6 +134,25 @@ def escreveMatrizArquivo(prefixoArquivoSaida, vertices, matriz):
 
     print(saida)
     
+
+def exportaGraphviz(agm):
+    dot = Graph()
+    vertices = agm['vertices']
+    matriz = agm['matriz']
+
+    for i in range(len(matriz)):
+        dot.node(str(i))
+
+    for i in range(len(vertices)):
+        for j in range(i):
+            if(matriz[i][j] != None):
+                dot.edge(str(i), str(j), "{0:.2f}".format(matriz[i][j]))
+
+    with open("saida.dot", "w") as arquivo:
+        arquivo.write(dot.source)
+    print(dot.source)
+
+    os.system("dot -Tpng saida.dot > saida.png")
 
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
@@ -184,8 +210,9 @@ if __name__ == "__main__":
             menorGlobal = achaMenorGlobal(recvbuf)
             agm['matriz'][menorGlobal[1]][menorGlobal[2]] = menorGlobal[0]
             agm['matriz'][menorGlobal[2]][menorGlobal[1]] = menorGlobal[0]
-            agm['vertices'].add(menorGlobal[1])
-            agm['vertices'].add(menorGlobal[2])
+            agm['vertices'][menorGlobal[1]] = menorGlobal[1]
+            agm['vertices'][menorGlobal[2]] = menorGlobal[2]
+            print("INSERINDO", len(agm['vertices']))
             
             if len(agm['vertices']) >= len(vertices):
                 sai = True
@@ -195,6 +222,7 @@ if __name__ == "__main__":
     if rank == 0:
         prefixoArquivoSaida = "saida"
         escreveMatrizArquivo(prefixoArquivoSaida, agm['vertices'], agm['matriz'])
+        exportaGraphviz(agm)
 
     MPI.Finalize()
         

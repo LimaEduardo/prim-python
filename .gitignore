@@ -136,4 +136,6 @@ dmypy.json
 # Ignore solutions file
 saida-mat.txt
 saida-read-model.txt
+saida.dot
+saida.png
 # End of https://www.gitignore.io/api/python,visualstudiocode
