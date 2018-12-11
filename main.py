@@ -38,6 +38,7 @@ def achaMenorMatriz(subGrafo, verticesDivisao, verticesAGM):
 
 
 def divideGrafo(vertices, matrizAdjacencia):
+    print("Divide")
     divisaoMatrizes = {}
 
     comm = MPI.COMM_WORLD
@@ -52,6 +53,7 @@ def divideGrafo(vertices, matrizAdjacencia):
     posicaoVerticeInicial = 0
     posicaoVerticeFinal = 0
     for i in range(size):
+        print("Processador: " + str(i))
         numeroColunas = int(len(vertices)/size)
 
         if (i < restoChunks):
@@ -63,8 +65,10 @@ def divideGrafo(vertices, matrizAdjacencia):
 
         arestasDivisao = []
         for j in range(tamanho):
+            print("Cria divisao nula: " + str(j))
             divisao.append([])
             for k in range(posicaoInicial, posicaoFinal):
+                print("Append coluna: " + str(k))
                 divisao[j].append(matrizAdjacencia[j][k])
         
         posicaoInicial = posicaoFinal
@@ -72,6 +76,9 @@ def divideGrafo(vertices, matrizAdjacencia):
         posicaoVerticeFinal += numeroColunas
         divisaoMatrizes[i] = {'matriz' : divisao, 'vertices' : vertices[posicaoVerticeInicial:posicaoVerticeFinal]}
         posicaoVerticeInicial = posicaoVerticeFinal
+
+        print("Termina processador: " + str(i))
+
     
     return divisaoMatrizes
 
@@ -117,13 +124,19 @@ if __name__ == "__main__":
         matriz = infos['matriz']
 
         divisoes = divideGrafo(vertices, matriz)
+        print("terminou divisões")
         
         for i in range(size):
+            print("Enviando para o processador " + str(i))
             comm.send(divisoes[i], dest=i, tag=0)
+            print("Terminou envio para o processador " + str(i))
+        
+        print("Terminou envios")
     
 
 
     divisao = comm.recv(source=0, tag=0)
+    print("Recebeu: " + str(rank))
     tamanho = 1
     
     if rank == 0:
@@ -134,7 +147,7 @@ if __name__ == "__main__":
 
     sai = False
     while (not sai):
-
+        print("Paralelo")
         verticesAGM = comm.bcast(agm['vertices'], root=0)
 
         
