@@ -44,6 +44,6 @@ $ python3 calculaSpeedupEficienciaMediaMenores.py
 
 O resultado deste último comando será um arquivo contendo (separados por tabulação):
 
-nome do teste \t número de processadores utilizados    tempo de execução    speedup     eficiência
+nome do teste, número de processadores utilizados, tempo de execução, speedup, eficiência
 
 para cada um dos testes realizados.
