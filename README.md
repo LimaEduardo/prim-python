@@ -42,8 +42,8 @@ Para calcular a média dos testes realizados execute o seguinte comando (é nece
 $ python3 calculaSpeedupEficienciaMediaMenores.py
 ```
 
-O resultado deste último comando será um arquivo contendo:
+O resultado deste último comando será um arquivo contendo (separados por tabulação):
 
-nome do teste    número de processadores utilizados    tempo de execução    speedup     eficiência
+nome do teste \t número de processadores utilizados    tempo de execução    speedup     eficiência
 
 para cada um dos testes realizados.
